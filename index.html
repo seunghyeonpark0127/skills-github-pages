@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>농어촌공사 지사 위치 및 번호</title>
     <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=l8ik5d337h"></script>
+    <script type="text/javascript" src="https://unpkg.com/@navermaps/marker-clustering/dist/MarkerClustering.js"></script>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -103,7 +104,7 @@ var locations = [
     { name: "부안지사", lat: 35.7283, lng: 126.7336, phone: "063-580-1013", address: "전북특별자치도 부안군 부안읍 번영로 211" },
     { name: "옥천·영동지사", lat: 36.3012, lng: 127.5715, phone: "043-730-2515", address: "충청북도 옥천군 옥천읍 중앙로 155" },
     { name: "양평·광주·서울지사", lat: 37.4895, lng: 127.4927, phone: "031-770-8015", address: "경기도 양평군 강상면 양평대교길 90-8" },
-    { name: "제주지역본부", lat: 33.4996, lng: 126.5312, phone: "064-750-8885", address: "제주특별자치도 제주시 선사로 12(삼양이동)" }
+    { name: "제주지역본부", lat: 33.4996, lng: 126.5312, phone: "064-750-8885", address: "제주특별자치도 제주시 선사로 12(삼양이동)" },
     { name: "울산지사", lat: 35.5384, lng: 129.3114, phone: "052-290-5300", address: "울산광역시 울주군 청량읍 군청2길 8-3" },
     { name: "상주지사", lat: 36.4159, lng: 128.1599, phone: "054-531-3618", address: "경상북도 상주시 북천로 5" },
     { name: "공주지사", lat: 36.4604, lng: 127.1247, phone: "041-850-6430", address: "충청남도 공주시 공주대학로 17-53(신관동)" },
@@ -158,14 +159,15 @@ var locations = [
     { name: "보은지사", lat: 36.4897, lng: 127.7294, phone: "043-540-2500", address: "충청북도 보은군 보은읍 교사삼산길 45" },
     { name: "논산지사", lat: 36.2031, lng: 127.0872, phone: "041-730-2120", address: "충청남도 논산시 관촉로 152(지산동)" },
     { name: "부여지사", lat: 36.2752, lng: 126.9094, phone: "041-837-9528", address: "충청남도 부여군 부여읍 성왕로 90" }
-];
+]; // 예제 데이터 (필요한 만큼 추가 가능)
+
         var markers = [];
         var infoWindows = [];
 
         locations.forEach(function(loc) {
             var marker = new naver.maps.Marker({
                 position: new naver.maps.LatLng(loc.lat, loc.lng),
-                map: null // 초기에는 지도에 추가하지 않음
+                map: map
             });
 
             var infoWindow = new naver.maps.InfoWindow({
@@ -181,19 +183,23 @@ var locations = [
             });
 
             markers.push(marker);
-            infoWindows.push(infoWindow);
         });
 
-        // 줌 변경 시 마커 표시 여부 제어
-        naver.maps.Event.addListener(map, 'zoom_changed', function() {
-            var zoomLevel = map.getZoom();
-            markers.forEach(function(marker) {
-                if (zoomLevel > 8) {
-                    marker.setMap(map);
-                } else {
-                    marker.setMap(null);
+        // **마커 클러스터링 추가** (성능 최적화)
+        var markerCluster = new MarkerClustering({
+            minClusterSize: 2, // 최소 클러스터링 마커 수
+            maxZoom: 12, // 줌 레벨 12 이상일 때 개별 마커 표시
+            map: map,
+            markers: markers,
+            disableClickZoom: false,
+            gridSize: 60,
+            icons: [
+                {
+                    content: `<div style="background:#ff5f5f; border-radius:50%; padding:10px; color:white;">{count}</div>`,
+                    size: new naver.maps.Size(40, 40),
+                    anchor: new naver.maps.Point(20, 20)
                 }
-            });
+            ]
         });
 
         // 현재 위치 찾기 기능
