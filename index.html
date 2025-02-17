@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>한국농어촌공사 지역별 지사 위치 및 번호 </title>
+    <title>농지연금 지사 지도</title>
     <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=l8ik5d337h"></script>
     <style>
         /* 전체 스타일 */
@@ -53,12 +53,13 @@
         .info-window {
             font-size: 14px;
             color: #333;
+            text-align: left;
         }
     </style>
 </head>
 <body>
 
-    <h2>한국농어촌공사 지사 위치 및 번호</h2>
+    <h2>농지연금 지사 위치</h2>
     
     <!-- 내 위치 찾기 버튼 -->
     <button id="find-location">내 위치 찾기</button>
@@ -71,10 +72,15 @@
             zoom: 7
         });
 
+        // 전국 지사 목록 (이름, 위도, 경도, 전화번호, 상세주소)
         var locations = [
-            { name: "안성지사", lat: 37.0078, lng: 127.2759, phone: "031-673-9772" },
-            { name: "고성·통영·거제지사", lat: 34.9729, lng: 128.3222, phone: "055-670-7003" },
-            { name: "거창·함양지사", lat: 35.6860, lng: 127.9096, phone: "055-940-5525" }
+            { name: "안성지사", lat: 37.0078, lng: 127.2759, phone: "031-673-9772", address: "경기도 안성시 실왕길 5(당왕동)" },
+            { name: "고성·통영·거제지사", lat: 34.9729, lng: 128.3222, phone: "055-670-7003", address: "경상남도 고성군 고성읍 기월2길 51" },
+            { name: "거창·함양지사", lat: 35.6860, lng: 127.9096, phone: "055-940-5525", address: "경상남도 거창군 거창읍 상동길 35" },
+            { name: "서울지사", lat: 37.5665, lng: 126.9780, phone: "02-123-4567", address: "서울특별시 중구 세종대로 110" },
+            { name: "부산지사", lat: 35.1796, lng: 129.0756, phone: "051-123-4567", address: "부산광역시 중구 중앙대로 26" },
+            { name: "대구지사", lat: 35.8714, lng: 128.6014, phone: "053-123-4567", address: "대구광역시 중구 공평로 88" },
+            { name: "인천지사", lat: 37.4563, lng: 126.7052, phone: "032-123-4567", address: "인천광역시 남동구 예술로 149" }
         ];
 
         locations.forEach(function(loc) {
@@ -84,7 +90,11 @@
             });
 
             var infoWindow = new naver.maps.InfoWindow({
-                content: `<div class="info-window" style="padding:10px;"><b>${loc.name}</b><br>☎ ${loc.phone}</div>`
+                content: `<div class="info-window" style="padding:10px;">
+                    <b>${loc.name}</b><br>
+                    📍 <b>주소:</b> ${loc.address}<br>
+                    ☎ <b>전화번호:</b> ${loc.phone}
+                </div>`
             });
 
             naver.maps.Event.addListener(marker, "click", function() {
@@ -121,3 +131,4 @@
 
 </body>
 </html>
+
