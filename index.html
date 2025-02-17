@@ -8,117 +8,121 @@
     <style>
         body {
             font-family: 'Arial', sans-serif;
-            text-align: center;
             margin: 0;
             padding: 0;
             background-color: #f4f4f4;
         }
-
-        h2 {
-            background-color: #2c3e50;
-            color: white;
-            padding: 15px;
-            margin: 0;
-            font-size: 24px;
-        }
-
-        #container {
+        .container {
             display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            flex-wrap: wrap;
+            flex-direction: row;
+            justify-content: space-between;
             max-width: 1200px;
             margin: auto;
+            padding: 20px;
         }
-
-        #map, #table-container {
+        .map-container {
             flex: 1;
-            min-width: 300px;
-            padding: 10px;
-        }
-
-        #map {
-            width: 100%;
             height: 600px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
-
-        #table-container {
-            display: none; /* 초기에 숨김 */
+        .table-container {
+            flex: 1;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
-
-        #toggle-btn {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            font-size: 16px;
-            cursor: pointer;
+        #search-box {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
             border-radius: 5px;
-            margin: 10px;
+            font-size: 16px;
         }
-
-        #toggle-btn:hover {
-            background-color: #2980b9;
-        }
-
         table {
             width: 100%;
             border-collapse: collapse;
-            background-color: white;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
-
         th, td {
-            padding: 10px;
             border: 1px solid #ddd;
+            padding: 10px;
             text-align: left;
-            font-size: 14px;
         }
-
         th {
             background-color: #2c3e50;
             color: white;
         }
-
+        /* 모바일 화면에서는 탭 방식 적용 */
         @media (max-width: 768px) {
-            #container {
+            .container {
                 flex-direction: column;
             }
-            #table-container {
+            .map-container {
+                height: 400px;
+            }
+            .tabs {
+                display: flex;
+                justify-content: center;
+                margin-bottom: 10px;
+            }
+            .tab-button {
+                padding: 10px 20px;
+                border: none;
+                cursor: pointer;
+                font-size: 16px;
+                background-color: #ccc;
+                margin: 5px;
+                border-radius: 5px;
+            }
+            .tab-button.active {
+                background-color: #2c3e50;
+                color: white;
+            }
+            .tab-content {
                 display: none;
             }
-            #map {
-                height: 400px;
+            .tab-content.active {
+                display: block;
             }
         }
     </style>
 </head>
 <body>
-    <h2>농어촌공사 지사 위치 및 번호</h2>
-    <button id="toggle-btn">지사 목록 보기</button>
-    <div id="container">
-        <div id="map"></div>
-        <div id="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>지사명</th>
-                        <th>주소</th>
-                        <th>전화번호</th>
-                    </tr>
-                </thead>
-                <tbody id="table-body"></tbody>
-            </table>
+    <h2 style="text-align: center; background-color: #2c3e50; color: white; padding: 15px;">농어촌공사 지사 위치 및 번호</h2>
+    <div class="tabs">
+        <button class="tab-button active" onclick="showTab('map')">지도 보기</button>
+        <button class="tab-button" onclick="showTab('table')">지사 목록</button>
+    </div>
+    <div class="container">
+        <div id="map-tab" class="tab-content active">
+            <div id="map" class="map-container"></div>
+        </div>
+        <div id="table-tab" class="tab-content">
+            <div class="table-container">
+                <input type="text" id="search-box" placeholder="지사 이름 검색..." onkeyup="filterTable()">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>지사명</th>
+                            <th>전화번호</th>
+                            <th>주소</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
-        var map = new naver.maps.Map('map', {
-            center: new naver.maps.LatLng(36.5, 127.5),
-            zoom: 7
-        });
+        function showTab(tab) {
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tab + '-tab').classList.add('active');
+            document.querySelector(`[onclick="showTab('${tab}')"]`).classList.add('active');
+        }
 
 var locations = [
     { name: "안성지사", lat: 37.0078, lng: 127.2759, phone: "031-673-9772", address: "경기도 안성시 실왕길 5(당왕동)" },
@@ -217,7 +221,10 @@ var locations = [
     { name: "부여지사", lat: 36.2752, lng: 126.9094, phone: "041-837-9528", address: "충청남도 부여군 부여읍 성왕로 90" }
 ];
 
-        var markers = [];
+        var map = new naver.maps.Map('map', {
+            center: new naver.maps.LatLng(36.5, 127.5),
+            zoom: 7
+        });
 
         locations.forEach(function(loc) {
             var marker = new naver.maps.Marker({
@@ -226,44 +233,27 @@ var locations = [
             });
 
             var infoWindow = new naver.maps.InfoWindow({
-                content: `<div class="info-window">
-                    <b>${loc.name}</b><br>
-                    📍 <b>주소:</b> ${loc.address}<br>
-                    ☎ <b>전화번호:</b> ${loc.phone}
-                </div>`
+                content: `<div class="info-window"><b>${loc.name}</b><br>📍 <b>주소:</b> ${loc.address}<br>☎ <b>전화번호:</b> ${loc.phone}</div>`
             });
 
             naver.maps.Event.addListener(marker, "click", function() {
                 infoWindow.open(map, marker);
             });
-
-            markers.push(marker);
         });
 
-        var toggleBtn = document.getElementById("toggle-btn");
-        var tableContainer = document.getElementById("table-container");
-        var mapContainer = document.getElementById("map");
+        function filterTable() {
+            var input = document.getElementById("search-box").value.toLowerCase();
+            var tableRows = document.querySelectorAll("#table-body tr");
+            tableRows.forEach(row => {
+                var name = row.children[0].innerText.toLowerCase();
+                row.style.display = name.includes(input) ? "" : "none";
+            });
+        }
+
         var tableBody = document.getElementById("table-body");
-
         locations.forEach(function(loc) {
-            var row = `<tr>
-                <td>${loc.name}</td>
-                <td>${loc.address}</td>
-                <td>${loc.phone}</td>
-            </tr>`;
+            var row = `<tr><td>${loc.name}</td><td>${loc.phone}</td><td>${loc.address}</td></tr>`;
             tableBody.innerHTML += row;
-        });
-
-        toggleBtn.addEventListener("click", function() {
-            if (tableContainer.style.display === "none") {
-                tableContainer.style.display = "block";
-                mapContainer.style.display = "none";
-                toggleBtn.textContent = "지도 보기";
-            } else {
-                tableContainer.style.display = "none";
-                mapContainer.style.display = "block";
-                toggleBtn.textContent = "지사 목록 보기";
-            }
         });
     </script>
 </body>
