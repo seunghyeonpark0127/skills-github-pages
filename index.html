@@ -22,14 +22,14 @@
             font-size: 24px;
         }
 
-        /* ✅ PC 버전: 지도와 표를 가로로 배치 */
+        /* ✅ PC 버전: 좌측 지도 / 우측 표 배치 */
         .container {
             display: flex;
-            flex-direction: row;
             justify-content: space-between;
             padding: 20px;
             max-width: 1200px;
             margin: auto;
+            gap: 20px;
         }
 
         #map {
@@ -74,7 +74,7 @@
             border-radius: 5px;
         }
 
-        /* ✅ 모바일에서는 지도와 표를 탭으로 전환 */
+        /* ✅ 모바일에서는 탭으로 전환 */
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
@@ -114,7 +114,6 @@
             #map {
                 width: 100%;
                 height: 60vh;
-                min-width: 100%;
             }
 
             .table-container {
@@ -129,19 +128,19 @@
 <body>
     <h2>농어촌공사 지사 위치 및 번호</h2>
 
-    <!-- ✅ 모바일에서 탭 추가 -->
+    <!-- ✅ 모바일에서만 보이는 탭 -->
     <div class="tabs">
         <button class="tab-btn active" onclick="showTab('map-container')">지도 보기</button>
         <button class="tab-btn" onclick="showTab('table-container')">지사 목록</button>
     </div>
 
     <div class="container">
-        <!-- 지도 -->
+        <!-- ✅ PC에서는 좌측 지도 -->
         <div id="map-container" class="content active">
             <div id="map"></div>
         </div>
 
-        <!-- 지사 목록 테이블 -->
+        <!-- ✅ PC에서는 우측 표 -->
         <div id="table-container" class="table-container content">
             <input type="text" class="search-box" placeholder="지사 이름 검색..." id="searchBox">
             <table>
@@ -296,7 +295,7 @@ var locations = [
             });
         });
 
-        // ✅ 탭 전환 기능 (모바일용)
+        // ✅ 모바일 탭 전환 기능
         function showTab(tabId) {
             document.querySelectorAll(".content").forEach(el => el.classList.remove("active"));
             document.querySelector("#" + tabId).classList.add("active");
