@@ -25,34 +25,25 @@
         .container {
             display: flex;
             flex-direction: row;
-            justify-content: center;
-            align-items: flex-start;
-            gap: 20px;
+            justify-content: space-between;
             padding: 20px;
         }
 
         #map {
-            width: 60%;
-            height: 600px;
+            flex: 1;
+            height: 85vh;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
         #table-container {
-            width: 35%;
+            flex: 1;
+            max-height: calc(100vh - 150px); /* 화면 높이에서 여백을 제외한 크기로 제한 */
+            overflow-y: auto; /* 세로 스크롤 활성화 */
             background: white;
-            padding: 15px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        #search-box {
-            width: 100%;
             padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 16px;
         }
 
         table {
@@ -62,7 +53,7 @@
 
         th, td {
             border: 1px solid #ddd;
-            padding: 10px;
+            padding: 8px;
             text-align: left;
         }
 
@@ -74,27 +65,20 @@
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
-                align-items: center;
             }
 
             #map {
-                width: 90%;
-                height: 400px;
-            }
-
-            #table-container {
-                width: 90%;
+                height: 60vh;
             }
         }
     </style>
 </head>
 <body>
     <h2>농어촌공사 지사 위치 및 번호</h2>
-    
     <div class="container">
         <div id="map"></div>
         <div id="table-container">
-            <input type="text" id="search-box" placeholder="지사 이름 검색...">
+            <input type="text" id="search-box" placeholder="지사 이름 검색..." onkeyup="searchTable()" style="width: 100%; padding: 8px; margin-bottom: 10px;">
             <table>
                 <thead>
                     <tr>
@@ -104,6 +88,7 @@
                     </tr>
                 </thead>
                 <tbody id="table-body">
+                    <!-- 지사 목록이 여기에 동적으로 삽입됨 -->
                 </tbody>
             </table>
         </div>
@@ -213,8 +198,6 @@ var locations = [
 ];
 
         var markers = [];
-        var infoWindows = [];
-
         locations.forEach(function(loc) {
             var marker = new naver.maps.Marker({
                 position: new naver.maps.LatLng(loc.lat, loc.lng),
@@ -230,32 +213,30 @@ var locations = [
             });
 
             naver.maps.Event.addListener(marker, "click", function() {
-                infoWindows.forEach(win => win.close());
                 infoWindow.open(map, marker);
             });
 
             markers.push(marker);
-            infoWindows.push(infoWindow);
         });
 
-        document.getElementById("search-box").addEventListener("input", function() {
-            var searchText = this.value.toLowerCase();
-            var tableBody = document.getElementById("table-body");
-            tableBody.innerHTML = "";
-
-            locations.forEach(function(loc) {
-                if (loc.name.toLowerCase().includes(searchText)) {
-                    var row = `<tr>
-                        <td>${loc.name}</td>
-                        <td>${loc.phone}</td>
-                        <td>${loc.address}</td>
-                    </tr>`;
-                    tableBody.innerHTML += row;
-                }
+        function searchTable() {
+            var input = document.getElementById("search-box").value.toLowerCase();
+            var rows = document.querySelectorAll("#table-body tr");
+            rows.forEach(row => {
+                var name = row.cells[0].textContent.toLowerCase();
+                row.style.display = name.includes(input) ? "" : "none";
             });
-        });
+        }
 
-        document.getElementById("search-box").dispatchEvent(new Event("input"));
+        function populateTable() {
+            var tableBody = document.getElementById("table-body");
+            locations.forEach(loc => {
+                var row = document.createElement("tr");
+                row.innerHTML = `<td>${loc.name}</td><td>${loc.phone}</td><td>${loc.address}</td>`;
+                tableBody.appendChild(row);
+            });
+        }
+        populateTable();
     </script>
 </body>
 </html>
