@@ -135,30 +135,6 @@
         <button class="tab-btn" onclick="showTab('table-container')">지사 목록</button>
     </div>
 
-    <div class="container">
-        <!-- ✅ PC에서는 왼쪽 지도 -->
-        <div id="map-container" class="content active">
-            <div id="map"></div>
-        </div>
-
-        <!-- ✅ PC에서는 오른쪽 표 -->
-        <div id="table-container" class="table-container content">
-            <input type="text" class="search-box" placeholder="지역 또는 지사 이름 검색..." id="searchBox">
-            <table>
-                <thead>
-                    <tr>
-                        <th>지사명</th>
-                        <th>전화번호</th>
-                        <th>주소</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                    <!-- JavaScript에서 동적으로 삽입 -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-
     <script>
         // ✅ 지도 초기화
         var map = new naver.maps.Map('map', {
