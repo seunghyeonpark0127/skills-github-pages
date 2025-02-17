@@ -8,31 +8,44 @@
     <style>
         body {
             font-family: 'Arial', sans-serif;
+            text-align: center;
             margin: 0;
             padding: 0;
             background-color: #f4f4f4;
         }
+
+        h2 {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px;
+            margin: 0;
+            font-size: 24px;
+        }
+
         .container {
             display: flex;
             flex-direction: row;
-            justify-content: space-between;
-            max-width: 1200px;
-            margin: auto;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
             padding: 20px;
         }
-        .map-container {
-            flex: 1;
+
+        #map {
+            width: 60%;
             height: 600px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
-        .table-container {
-            flex: 1;
-            padding: 20px;
+
+        #table-container {
+            width: 35%;
             background: white;
+            padding: 15px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
+
         #search-box {
             width: 100%;
             padding: 10px;
@@ -41,88 +54,66 @@
             border-radius: 5px;
             font-size: 16px;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
         }
+
         th, td {
             border: 1px solid #ddd;
             padding: 10px;
             text-align: left;
         }
+
         th {
             background-color: #2c3e50;
             color: white;
         }
-        /* 모바일 화면에서는 탭 방식 적용 */
+
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
+                align-items: center;
             }
-            .map-container {
+
+            #map {
+                width: 90%;
                 height: 400px;
             }
-            .tabs {
-                display: flex;
-                justify-content: center;
-                margin-bottom: 10px;
-            }
-            .tab-button {
-                padding: 10px 20px;
-                border: none;
-                cursor: pointer;
-                font-size: 16px;
-                background-color: #ccc;
-                margin: 5px;
-                border-radius: 5px;
-            }
-            .tab-button.active {
-                background-color: #2c3e50;
-                color: white;
-            }
-            .tab-content {
-                display: none;
-            }
-            .tab-content.active {
-                display: block;
+
+            #table-container {
+                width: 90%;
             }
         }
     </style>
 </head>
 <body>
-    <h2 style="text-align: center; background-color: #2c3e50; color: white; padding: 15px;">농어촌공사 지사 위치 및 번호</h2>
-    <div class="tabs">
-        <button class="tab-button active" onclick="showTab('map')">지도 보기</button>
-        <button class="tab-button" onclick="showTab('table')">지사 목록</button>
-    </div>
+    <h2>농어촌공사 지사 위치 및 번호</h2>
+    
     <div class="container">
-        <div id="map-tab" class="tab-content active">
-            <div id="map" class="map-container"></div>
-        </div>
-        <div id="table-tab" class="tab-content">
-            <div class="table-container">
-                <input type="text" id="search-box" placeholder="지사 이름 검색..." onkeyup="filterTable()">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>지사명</th>
-                            <th>전화번호</th>
-                            <th>주소</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body"></tbody>
-                </table>
-            </div>
+        <div id="map"></div>
+        <div id="table-container">
+            <input type="text" id="search-box" placeholder="지사 이름 검색...">
+            <table>
+                <thead>
+                    <tr>
+                        <th>지사명</th>
+                        <th>전화번호</th>
+                        <th>주소</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                </tbody>
+            </table>
         </div>
     </div>
 
     <script>
-        function showTab(tab) {
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            document.getElementById(tab + '-tab').classList.add('active');
-            document.querySelector(`[onclick="showTab('${tab}')"]`).classList.add('active');
-        }
+        var map = new naver.maps.Map('map', {
+            center: new naver.maps.LatLng(36.5, 127.5),
+            zoom: 7
+        });
 
 var locations = [
     { name: "안성지사", lat: 37.0078, lng: 127.2759, phone: "031-673-9772", address: "경기도 안성시 실왕길 5(당왕동)" },
@@ -221,10 +212,8 @@ var locations = [
     { name: "부여지사", lat: 36.2752, lng: 126.9094, phone: "041-837-9528", address: "충청남도 부여군 부여읍 성왕로 90" }
 ];
 
-        var map = new naver.maps.Map('map', {
-            center: new naver.maps.LatLng(36.5, 127.5),
-            zoom: 7
-        });
+        var markers = [];
+        var infoWindows = [];
 
         locations.forEach(function(loc) {
             var marker = new naver.maps.Marker({
@@ -233,28 +222,40 @@ var locations = [
             });
 
             var infoWindow = new naver.maps.InfoWindow({
-                content: `<div class="info-window"><b>${loc.name}</b><br>📍 <b>주소:</b> ${loc.address}<br>☎ <b>전화번호:</b> ${loc.phone}</div>`
+                content: `<div class="info-window">
+                    <b>${loc.name}</b><br>
+                    📍 <b>주소:</b> ${loc.address}<br>
+                    ☎ <b>전화번호:</b> ${loc.phone}
+                </div>`
             });
 
             naver.maps.Event.addListener(marker, "click", function() {
+                infoWindows.forEach(win => win.close());
                 infoWindow.open(map, marker);
             });
+
+            markers.push(marker);
+            infoWindows.push(infoWindow);
         });
 
-        function filterTable() {
-            var input = document.getElementById("search-box").value.toLowerCase();
-            var tableRows = document.querySelectorAll("#table-body tr");
-            tableRows.forEach(row => {
-                var name = row.children[0].innerText.toLowerCase();
-                row.style.display = name.includes(input) ? "" : "none";
+        document.getElementById("search-box").addEventListener("input", function() {
+            var searchText = this.value.toLowerCase();
+            var tableBody = document.getElementById("table-body");
+            tableBody.innerHTML = "";
+
+            locations.forEach(function(loc) {
+                if (loc.name.toLowerCase().includes(searchText)) {
+                    var row = `<tr>
+                        <td>${loc.name}</td>
+                        <td>${loc.phone}</td>
+                        <td>${loc.address}</td>
+                    </tr>`;
+                    tableBody.innerHTML += row;
+                }
             });
-        }
-
-        var tableBody = document.getElementById("table-body");
-        locations.forEach(function(loc) {
-            var row = `<tr><td>${loc.name}</td><td>${loc.phone}</td><td>${loc.address}</td></tr>`;
-            tableBody.innerHTML += row;
         });
+
+        document.getElementById("search-box").dispatchEvent(new Event("input"));
     </script>
 </body>
 </html>
