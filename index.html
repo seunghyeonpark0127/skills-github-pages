@@ -8,77 +8,73 @@
     <style>
         body {
             font-family: 'Arial', sans-serif;
+            text-align: center;
             margin: 0;
             padding: 0;
             background-color: #f4f4f4;
         }
 
-        /* PC 버전 (가로 레이아웃) */
-        .container {
+        h2 {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px;
+            margin: 0;
+            font-size: 24px;
+        }
+
+        #container {
             display: flex;
-            flex-direction: row;
-            padding: 20px;
+            justify-content: center;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            max-width: 1200px;
+            margin: auto;
         }
 
-        #map-container {
-            flex: 2;
-            margin-right: 20px;
-        }
-
-        #table-container {
+        #map, #table-container {
             flex: 1;
-            background-color: white;
-            padding: 20px;
-            border-left: 2px solid #ddd;
-            overflow-y: auto;
-            max-height: 600px;
+            min-width: 300px;
+            padding: 10px;
         }
 
-        /* 모바일 버전 (세로 레이아웃) */
-        @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
-                padding: 10px;
-            }
-
-            #map-container {
-                margin-right: 0;
-                margin-bottom: 20px;
-            }
-
-            #table-container {
-                border-left: none;
-            }
-        }
-
-        /* 지도 스타일 */
         #map {
             width: 100%;
-            height: 500px;
+            height: 600px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
-        /* 검색창 스타일 */
-        #search-box {
-            width: 100%;
-            padding: 8px;
-            font-size: 16px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            margin-bottom: 10px;
+        #table-container {
+            display: none; /* 초기에 숨김 */
         }
 
-        /* 표 스타일 */
+        #toggle-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 10px;
+        }
+
+        #toggle-btn:hover {
+            background-color: #2980b9;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            text-align: left;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
         th, td {
-            padding: 8px;
-            border-bottom: 1px solid #ddd;
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+            font-size: 14px;
         }
 
         th {
@@ -86,48 +82,25 @@
             color: white;
         }
 
-        tr:hover {
-            background-color: #f1f1f1;
-            cursor: pointer;
+        @media (max-width: 768px) {
+            #container {
+                flex-direction: column;
+            }
+            #table-container {
+                display: none;
+            }
+            #map {
+                height: 400px;
+            }
         }
-
-        /* 페이지네이션 버튼 */
-        .pagination {
-            display: flex;
-            justify-content: center;
-            margin-top: 10px;
-        }
-
-        .pagination button {
-            padding: 8px 12px;
-            margin: 2px;
-            border: 1px solid #ccc;
-            background-color: #3498db;
-            color: white;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-
-        .pagination button:disabled {
-            background-color: #bdc3c7;
-            cursor: not-allowed;
-        }
-
     </style>
 </head>
 <body>
-
-    <h2 style="text-align: center;">농어촌공사 지사 위치 및 번호</h2>
-
-    <div class="container">
-        <!-- 지도 영역 -->
-        <div id="map-container">
-            <div id="map"></div>
-        </div>
-
-        <!-- 표 영역 -->
+    <h2>농어촌공사 지사 위치 및 번호</h2>
+    <button id="toggle-btn">지사 목록 보기</button>
+    <div id="container">
+        <div id="map"></div>
         <div id="table-container">
-            <input type="text" id="search-box" placeholder="지사명, 주소, 전화번호 검색">
             <table>
                 <thead>
                     <tr>
@@ -136,14 +109,8 @@
                         <th>전화번호</th>
                     </tr>
                 </thead>
-                <tbody id="table-body">
-                    <!-- JS에서 자동 생성 -->
-                </tbody>
+                <tbody id="table-body"></tbody>
             </table>
-            <div class="pagination">
-                <button id="prev-page" disabled>이전</button>
-                <button id="next-page">다음</button>
-            </div>
         </div>
     </div>
 
@@ -251,70 +218,53 @@ var locations = [
 ];
 
         var markers = [];
-        var infoWindows = [];
-        var tableBody = document.getElementById("table-body");
-        var currentPage = 0;
-        var rowsPerPage = 10;
 
-        function displayTable() {
-            tableBody.innerHTML = "";
-            var start = currentPage * rowsPerPage;
-            var end = start + rowsPerPage;
-            var pageData = locations.slice(start, end);
-
-            pageData.forEach(function (loc, index) {
-                var marker = new naver.maps.Marker({
-                    position: new naver.maps.LatLng(loc.lat, loc.lng),
-                    map: map
-                });
-
-                var infoWindow = new naver.maps.InfoWindow({
-                    content: `<div class="info-window">
-                        <b>${loc.name}</b><br>
-                        📍 <b>주소:</b> ${loc.address}<br>
-                        ☎ <b>전화번호:</b> ${loc.phone}
-                    </div>`
-                });
-
-                naver.maps.Event.addListener(marker, "click", function () {
-                    infoWindows.forEach(function (win) { win.close(); });
-                    infoWindow.open(map, marker);
-                    map.setCenter(marker.getPosition());
-                    map.setZoom(12);
-                });
-
-                markers.push(marker);
-                infoWindows.push(infoWindow);
-
-                var row = document.createElement("tr");
-                row.innerHTML = `<td>${loc.name}</td><td>${loc.address}</td><td>${loc.phone}</td>`;
-                row.addEventListener("click", function () {
-                    naver.maps.Event.trigger(marker, "click");
-                });
-
-                tableBody.appendChild(row);
+        locations.forEach(function(loc) {
+            var marker = new naver.maps.Marker({
+                position: new naver.maps.LatLng(loc.lat, loc.lng),
+                map: map
             });
 
-            document.getElementById("prev-page").disabled = currentPage === 0;
-            document.getElementById("next-page").disabled = end >= locations.length;
-        }
+            var infoWindow = new naver.maps.InfoWindow({
+                content: `<div class="info-window">
+                    <b>${loc.name}</b><br>
+                    📍 <b>주소:</b> ${loc.address}<br>
+                    ☎ <b>전화번호:</b> ${loc.phone}
+                </div>`
+            });
 
-        document.getElementById("prev-page").addEventListener("click", function () {
-            if (currentPage > 0) {
-                currentPage--;
-                displayTable();
-            }
+            naver.maps.Event.addListener(marker, "click", function() {
+                infoWindow.open(map, marker);
+            });
+
+            markers.push(marker);
         });
 
-        document.getElementById("next-page").addEventListener("click", function () {
-            if ((currentPage + 1) * rowsPerPage < locations.length) {
-                currentPage++;
-                displayTable();
-            }
+        var toggleBtn = document.getElementById("toggle-btn");
+        var tableContainer = document.getElementById("table-container");
+        var mapContainer = document.getElementById("map");
+        var tableBody = document.getElementById("table-body");
+
+        locations.forEach(function(loc) {
+            var row = `<tr>
+                <td>${loc.name}</td>
+                <td>${loc.address}</td>
+                <td>${loc.phone}</td>
+            </tr>`;
+            tableBody.innerHTML += row;
         });
 
-        displayTable();
+        toggleBtn.addEventListener("click", function() {
+            if (tableContainer.style.display === "none") {
+                tableContainer.style.display = "block";
+                mapContainer.style.display = "none";
+                toggleBtn.textContent = "지도 보기";
+            } else {
+                tableContainer.style.display = "none";
+                mapContainer.style.display = "block";
+                toggleBtn.textContent = "지사 목록 보기";
+            }
+        });
     </script>
-
 </body>
 </html>
