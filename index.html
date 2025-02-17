@@ -3,19 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>농지연금 지사 지도</title>
-<script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=l8ik5d337h"></script>
-
+    <title>한국농어촌공사 지역별 지사 위치 및 번호 </title>
+    <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=l8ik5d337h"></script>
     <style>
+        /* 전체 스타일 */
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        h2 {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px;
+            margin: 0;
+            font-size: 24px;
+        }
+
+        /* 지도 스타일 */
         #map {
-            width: 100%;
+            width: 90%;
+            max-width: 1000px;
             height: 600px;
+            margin: 20px auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 버튼 스타일 */
+        #find-location {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        #find-location:hover {
+            background-color: #2980b9;
+        }
+
+        /* 마커 정보 스타일 */
+        .info-window {
+            font-size: 14px;
+            color: #333;
         }
     </style>
 </head>
 <body>
-    <h2>농지연금 지사 위치</h2>
+
+    <h2>한국농어촌공사 지사 위치 및 번호</h2>
+    
+    <!-- 내 위치 찾기 버튼 -->
+    <button id="find-location">내 위치 찾기</button>
+
     <div id="map"></div>
+
     <script>
         var map = new naver.maps.Map('map', {
             center: new naver.maps.LatLng(37.5665, 126.9780), // 기본 중심: 서울
@@ -35,13 +84,40 @@
             });
 
             var infoWindow = new naver.maps.InfoWindow({
-                content: `<div style="padding:10px;">${loc.name}<br>☎ ${loc.phone}</div>`
+                content: `<div class="info-window" style="padding:10px;"><b>${loc.name}</b><br>☎ ${loc.phone}</div>`
             });
 
             naver.maps.Event.addListener(marker, "click", function() {
                 infoWindow.open(map, marker);
             });
         });
+
+        // 내 위치 찾기 버튼 기능 추가
+        document.getElementById("find-location").addEventListener("click", function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var userLocation = new naver.maps.LatLng(position.coords.latitude, position.coords.longitude);
+                    map.setCenter(userLocation);
+                    map.setZoom(12);
+
+                    var userMarker = new naver.maps.Marker({
+                        position: userLocation,
+                        map: map,
+                        icon: {
+                            url: "https://ssl.pstatic.net/static/maps/m/pin_rd.png", // 사용자 위치 아이콘
+                            size: new naver.maps.Size(24, 36),
+                            origin: new naver.maps.Point(0, 0),
+                            anchor: new naver.maps.Point(12, 36)
+                        }
+                    });
+                }, function(error) {
+                    alert("위치 정보를 가져올 수 없습니다.");
+                });
+            } else {
+                alert("이 브라우저에서는 위치 정보 기능을 지원하지 않습니다.");
+            }
+        });
     </script>
+
 </body>
 </html>
