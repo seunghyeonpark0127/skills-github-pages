@@ -5,59 +5,94 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>농어촌공사 지사 위치 및 번호</title>
     <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=l8ik5d337h"></script>
-    <script type="text/javascript" src="https://unpkg.com/@navermaps/marker-clustering/dist/MarkerClustering.js"></script>
     <style>
         body {
             font-family: 'Arial', sans-serif;
-            text-align: center;
             margin: 0;
             padding: 0;
             background-color: #f4f4f4;
+            display: flex;
         }
 
-        h2 {
-            background-color: #2c3e50;
-            color: white;
-            padding: 15px;
-            margin: 0;
-            font-size: 24px;
+        /* 왼쪽 지도 영역 */
+        #map-container {
+            flex: 2;
+            padding: 20px;
         }
 
         #map {
-            width: 90%;
-            max-width: 1000px;
+            width: 100%;
             height: 600px;
-            margin: 20px auto;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
-        #find-location {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 10px 15px;
+        /* 오른쪽 표 영역 */
+        #table-container {
+            flex: 1;
+            padding: 20px;
+            background-color: white;
+            border-left: 2px solid #ddd;
+            overflow-y: auto;
+            height: 600px;
+        }
+
+        #search-box {
+            width: 100%;
+            padding: 8px;
             font-size: 16px;
-            cursor: pointer;
+            border: 1px solid #ddd;
             border-radius: 5px;
             margin-bottom: 10px;
         }
 
-        #find-location:hover {
-            background-color: #2980b9;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
         }
 
-        .info-window {
-            font-size: 14px;
-            color: #333;
-            text-align: left;
+        th, td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #2c3e50;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <h2>농어촌공사 지사 위치 및 번호</h2>
-    <button id="find-location">내 위치 찾기</button>
-    <div id="map"></div>
+
+    <!-- 지도 영역 -->
+    <div id="map-container">
+        <h2>농어촌공사 지사 위치 및 번호</h2>
+        <div id="map"></div>
+    </div>
+
+    <!-- 표 영역 -->
+    <div id="table-container">
+        <input type="text" id="search-box" placeholder="지사명, 주소, 전화번호 검색">
+        <table>
+            <thead>
+                <tr>
+                    <th>지사명</th>
+                    <th>주소</th>
+                    <th>전화번호</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <!-- JS에서 자동 생성 -->
+            </tbody>
+        </table>
+    </div>
+
     <script>
         var map = new naver.maps.Map('map', {
             center: new naver.maps.LatLng(36.5, 127.5),
@@ -159,12 +194,14 @@ var locations = [
     { name: "보은지사", lat: 36.4897, lng: 127.7294, phone: "043-540-2500", address: "충청북도 보은군 보은읍 교사삼산길 45" },
     { name: "논산지사", lat: 36.2031, lng: 127.0872, phone: "041-730-2120", address: "충청남도 논산시 관촉로 152(지산동)" },
     { name: "부여지사", lat: 36.2752, lng: 126.9094, phone: "041-837-9528", address: "충청남도 부여군 부여읍 성왕로 90" }
-]; // 예제 데이터 (필요한 만큼 추가 가능)
+];
 
         var markers = [];
         var infoWindows = [];
+        var tableBody = document.getElementById("table-body");
 
-        locations.forEach(function(loc) {
+        // 지도에 마커 추가 & 표 생성
+        locations.forEach(function (loc, index) {
             var marker = new naver.maps.Marker({
                 position: new naver.maps.LatLng(loc.lat, loc.lng),
                 map: map
@@ -178,55 +215,43 @@ var locations = [
                 </div>`
             });
 
-            naver.maps.Event.addListener(marker, "click", function() {
+            // 마커 클릭 시 정보창 열기
+            naver.maps.Event.addListener(marker, "click", function () {
+                infoWindows.forEach(function (win) { win.close(); });
                 infoWindow.open(map, marker);
+                map.setCenter(marker.getPosition());
+                map.setZoom(12);
             });
 
             markers.push(marker);
+            infoWindows.push(infoWindow);
+
+            // 표에 데이터 추가
+            var row = document.createElement("tr");
+            row.innerHTML = `<td>${loc.name}</td><td>${loc.address}</td><td>${loc.phone}</td>`;
+            row.addEventListener("click", function () {
+                naver.maps.Event.trigger(marker, "click");
+            });
+
+            tableBody.appendChild(row);
         });
 
-        // **마커 클러스터링 추가** (성능 최적화)
-        var markerCluster = new MarkerClustering({
-            minClusterSize: 2, // 최소 클러스터링 마커 수
-            maxZoom: 12, // 줌 레벨 12 이상일 때 개별 마커 표시
-            map: map,
-            markers: markers,
-            disableClickZoom: false,
-            gridSize: 60,
-            icons: [
-                {
-                    content: `<div style="background:#ff5f5f; border-radius:50%; padding:10px; color:white;">{count}</div>`,
-                    size: new naver.maps.Size(40, 40),
-                    anchor: new naver.maps.Point(20, 20)
+        // 검색 기능 추가
+        document.getElementById("search-box").addEventListener("input", function () {
+            var searchText = this.value.toLowerCase();
+            var rows = tableBody.getElementsByTagName("tr");
+
+            Array.from(rows).forEach(function (row) {
+                var text = row.innerText.toLowerCase();
+                if (text.includes(searchText)) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
                 }
-            ]
+            });
         });
 
-        // 현재 위치 찾기 기능
-        document.getElementById("find-location").addEventListener("click", function() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    var userLocation = new naver.maps.LatLng(position.coords.latitude, position.coords.longitude);
-                    map.setCenter(userLocation);
-                    map.setZoom(12);
-
-                    var userMarker = new naver.maps.Marker({
-                        position: userLocation,
-                        map: map,
-                        icon: {
-                            url: "https://ssl.pstatic.net/static/maps/m/pin_rd.png",
-                            size: new naver.maps.Size(24, 36),
-                            origin: new naver.maps.Point(0, 0),
-                            anchor: new naver.maps.Point(12, 36)
-                        }
-                    });
-                }, function(error) {
-                    alert("위치 정보를 가져올 수 없습니다.");
-                });
-            } else {
-                alert("이 브라우저에서는 위치 정보 기능을 지원하지 않습니다.");
-            }
-        });
     </script>
+
 </body>
 </html>
